@@ -51,9 +51,7 @@ function App() {
         console.log(faces);
 
         const ctx = canvasRef.current.getContext("2d");
-        faces.forEach((face) =>  {
-          drawMesh(face, ctx) 
-        })
+        drawMesh(faces, ctx) 
 
       } else {
         console.warn("Webcam is not ready.");

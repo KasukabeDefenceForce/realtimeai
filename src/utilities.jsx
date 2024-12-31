@@ -2644,44 +2644,72 @@ export const TRIANGULATION = [
   
   // Triangle drawing method
   const drawPath = (ctx, points, closePath) => {
-    const region = new Path2D();
-    region.moveTo(points[0][0], points[0][1]);
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
-      const point = points[i];
-      region.lineTo(point[0], point[1]);
+        ctx.lineTo(points[i].x, points[i].y);
     }
-  
     if (closePath) {
-      region.closePath();
+        ctx.closePath();
     }
-    ctx.strokeStyle = "grey";
-    ctx.stroke(region);
-  };
+    ctx.strokeStyle = "red";
+    ctx.stroke();
+};
   
-  // Drawing Mesh
-  export const drawMesh = (face, ctx) => {
-    const keypoints = face.keypoints;
+  // // Drawing Mesh
+  // export const drawMesh = (face, ctx) => {
+  //   const keypoints = face.keypoints;
   
-    // Set the canvas style
-    ctx.fillStyle = "red";
-    ctx.strokeStyle = "blue";
-    ctx.lineWidth = 1;
+  //   // Set the canvas style
+  //   ctx.fillStyle = "red";
+  //   ctx.strokeStyle = "blue";
+  //   ctx.lineWidth = 1;
   
-    // Draw points
-    keypoints.forEach(({ x, y }) => {
-      ctx.beginPath();
-      ctx.arc(x, y, 1, 0, 2 * Math.PI);
-      ctx.fill();
-    });
+  //   // Draw points
+  //   keypoints.forEach(({ x, y }) => {
+  //     ctx.beginPath();
+  //     ctx.arc(x, y, 1, 0, 2 * Math.PI);
+  //     ctx.fill();
+  //   });
+
+  //   if (face.mesh) {
+  //     face.mesh.forEach(([start, end]) => {
+  //       ctx.beginPath();
+  //       ctx.moveTo(keypoints[start].x, keypoints[start].y);
+  //       ctx.lineTo(keypoints[end].x, keypoints[end].y);
+  //       ctx.stroke();
+  //     });
+  //   }
+  // };
   
-    // Optional: Draw connections (lines between keypoints)
-    if (face.mesh) {
-      face.mesh.forEach(([start, end]) => {
-        ctx.beginPath();
-        ctx.moveTo(keypoints[start].x, keypoints[start].y);
-        ctx.lineTo(keypoints[end].x, keypoints[end].y);
-        ctx.stroke();
+  export const drawMesh = (predictions, ctx) => {
+    if (predictions.length > 0) {
+      predictions.forEach((prediction) => {
+        console.log("p", prediction.keypoints)
+        const keypoints = prediction.keypoints;
+  
+        //  Draw Triangles
+        for (let i = 0; i < TRIANGULATION.length / 3; i++) {
+          // Get sets of three keypoints for the triangle
+          const points = [
+            TRIANGULATION[i * 3],
+            TRIANGULATION[i * 3 + 1],
+            TRIANGULATION[i * 3 + 2],
+          ].map((index) => keypoints[index]);
+          //  Draw triangle
+          drawPath(ctx, points, true);
+        }
+  
+        // Draw Dots
+        for (let i = 0; i < keypoints.length; i++) {
+          const x = keypoints[i][0];
+          const y = keypoints[i][1];
+  
+          ctx.beginPath();
+          ctx.arc(x, y, 1 /* radius */, 0, 3 * Math.PI);
+          ctx.fillStyle = "aqua";
+          ctx.fill();
+        }
       });
     }
   };
-  
