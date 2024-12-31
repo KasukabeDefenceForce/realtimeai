@@ -1,35 +1,73 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import "./App.css";
+import * as facemesh from "@tensorflow-models/face-landmarks-detection";
+import Webcam from "react-webcam";
+import { useEffect, useRef } from "react";
+import { drawMesh } from "./utilities.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const webcamRef = useRef(null);
+  const canvasRef = useRef(null);
 
+  useEffect(() => {
+    const runFacemesh = async () => {
+      try {
+        const net = facemesh.SupportedModels.MediaPipeFaceMesh;
+        const detectorConfig = {
+          runtime: 'mediapipe', // or 'tfjs'
+          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
+        };
+        
+        const detector = await facemesh.createDetector(net, detectorConfig);
+        setInterval(() => {
+          detect(detector);
+        }, 100);
+      } catch (error) {
+        console.error("Error initializing FaceMesh detector:", error);
+      }
+    };
+    runFacemesh();
+  }, []);
+  
+  const detect = async (detector) => {
+    try {
+      // Ensure webcam is ready
+      if (
+        webcamRef.current &&
+        webcamRef.current.video.readyState === 4
+      ) {
+        const video = webcamRef.current.video;
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
+  
+        // Set video and canvas dimensions
+        webcamRef.current.width = videoWidth;
+        webcamRef.current.height = videoHeight;
+  
+        canvasRef.current.width = videoWidth;
+        canvasRef.current.height = videoHeight;
+  
+        // Estimate faces
+        const faces = await detector.estimateFaces(video);
+        console.log(faces);
+
+        const ctx = canvasRef.current.getContext("2d");
+        faces.forEach((face) =>  {
+          drawMesh(face, ctx) 
+        })
+
+      } else {
+        console.warn("Webcam is not ready.");
+      }
+    } catch (error) {
+      console.error("Error detecting faces:", error);
+    }
+  };
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="App">
+      <Webcam ref={webcamRef} style={{}} />
+      <canvas ref={canvasRef}></canvas>
+    </div>
+  );
 }
 
-export default App
+export default App;
